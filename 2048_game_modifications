@@ -1,0 +1,185 @@
+import java.util.Random;
+import java.util.Scanner;
+
+public class Game2048 {
+    private static final int SIZE = 8;
+    private static final int WINNING_TILE = 4096;  // New winning tile value
+    private int[][] board;
+    private Random random;
+    private boolean gameOver;
+
+    public Game2048() {
+        board = new int[SIZE][SIZE];
+        random = new Random();
+        gameOver = false;
+        addNewTile();
+        addNewTile();
+    }
+
+    private void addNewTile() {
+        int row, col;
+        do {
+            row = random.nextInt(SIZE);
+            col = random.nextInt(SIZE);
+        } while (board[row][col] != 0);
+
+        board[row][col] = random.nextInt(10) == 0 ? 4 : 2;
+    }
+
+    private void printBoard() {
+        System.out.println("Current Board:");
+        for (int[] row : board) {
+            for (int tile : row) {
+                System.out.print(tile == 0 ? "." : tile);
+                System.out.print("\t");
+            }
+            System.out.println();
+        }
+        System.out.println();
+    }
+
+    private boolean canMove() {
+        for (int row = 0; row < SIZE; row++) {
+            for (int col = 0; col < SIZE; col++) {
+                if (board[row][col] == 0) {
+                    return true;
+                }
+                if (col < SIZE - 1 && board[row][col] == board[row][col + 1]) {
+                    return true;
+                }
+                if (row < SIZE - 1 && board[row][col] == board[row + 1][col]) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    private void moveLeft() {
+        for (int row = 0; row < SIZE; row++) {
+            int[] newRow = new int[SIZE];
+            int index = 0;
+
+            for (int col = 0; col < SIZE; col++) {
+                if (board[row][col] != 0) {
+                    newRow[index++] = board[row][col];
+                }
+            }
+
+            for (int col = 0; col < SIZE - 1; col++) {
+                if (newRow[col] != 0 && newRow[col] == newRow[col + 1]) {
+                    newRow[col] *= 2;
+                    newRow[col + 1] = 0;
+                }
+            }
+
+            index = 0;
+            for (int col = 0; col < SIZE; col++) {
+                if (newRow[col] != 0) {
+                    board[row][index++] = newRow[col];
+                } else {
+                    board[row][index++] = 0;
+                }
+            }
+        }
+    }
+
+    private void moveRight() {
+        rotateBoard();
+        rotateBoard();
+        moveLeft();
+        rotateBoard();
+        rotateBoard();
+    }
+
+    private void moveUp() {
+        rotateBoard();
+        rotateBoard();
+        rotateBoard();
+        moveLeft();
+        rotateBoard();
+    }
+
+    private void moveDown() {
+        rotateBoard();
+        moveLeft();
+        rotateBoard();
+        rotateBoard();
+        rotateBoard();
+    }
+
+    private void rotateBoard() {
+        int[][] newBoard = new int[SIZE][SIZE];
+
+        for (int row = 0; row < SIZE; row++) {
+            for (int col = 0; col < SIZE; col++) {
+                newBoard[col][SIZE - 1 - row] = board[row][col];
+            }
+        }
+
+        board = newBoard;
+    }
+
+    public void play() {
+        Scanner scanner = new Scanner(System.in);
+
+        while (!gameOver) {
+            printBoard();
+
+            System.out.println("Enter move (WASD): ");
+            char move = scanner.next().charAt(0);
+
+            switch (move) {
+                case 'W':
+                case 'w':
+                    moveUp();
+                    break;
+                case 'A':
+                case 'a':
+                    moveLeft();
+                    break;
+                case 'S':
+                case 's':
+                    moveDown();
+                    break;
+                case 'D':
+                case 'd':
+                    moveRight();
+                    break;
+                default:
+                    System.out.println("Invalid move. Use WASD keys.");
+                    continue;
+            }
+
+            addNewTile();
+
+            if (!canMove()) {
+                gameOver = true;
+                System.out.println("Game Over!");
+            }
+
+            if (hasWon()) {
+                System.out.println("You've reached the " + WINNING_TILE + " tile!");
+                gameOver = true;
+            }
+        }
+
+        scanner.close();
+    }
+
+    private boolean hasWon() {
+        for (int row = 0; row < SIZE; row++) {
+            for (int col = 0; col < SIZE; col++) {
+                if (board[row][col] == WINNING_TILE) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    public static void main(String[] args) {
+        Game2048 game = new Game2048();
+        game.play();
+    }
+}
